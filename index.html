@@ -1,0 +1,2974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CaterSmart AI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>" />
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+/>
+<style>
+  /* Layout: navy sidebar + scrolling workspace of cards; one section visible at a time */
+  :root {
+    --bg: #f2f6f4;
+    --card: #ffffff;
+    --ink: #0b1f3a;
+    --muted: #566678;
+    --line: #dae4e0;
+    --accent: #047857;
+    --accent-ink: #ffffff;
+    --accent-soft: #d5f0e4;
+    --side-bg: #0b1f3a;
+    --side-ink: #e8eef6;
+    --side-muted: #9fb0c6;
+    --side-active: #14304f;
+    --good: #047857;
+    --good-soft: #d5f0e4;
+    --warn: #9a5b00;
+    --warn-soft: #fdefd2;
+    --bad: #b42318;
+    --bad-soft: #fde4e1;
+    --info: #1b4fbf;
+    --info-soft: #e1eafd;
+    --neutral-soft: #e8eef1;
+    --c1: #047857;
+    --c2: #6ee7b7;
+    --c3: #c5d0da;
+    --c4: #e2574c;
+    --shadow:
+      0 1px 2px rgba(11, 31, 58, 0.06), 0 6px 18px rgba(11, 31, 58, 0.05);
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a1424;
+      --card: #102038;
+      --ink: #e7eef7;
+      --muted: #97a8be;
+      --line: #223650;
+      --accent: #34d399;
+      --accent-ink: #052018;
+      --accent-soft: #12382f;
+      --side-bg: #071120;
+      --side-ink: #e8eef6;
+      --side-muted: #8fa2ba;
+      --side-active: #122743;
+      --good: #4ade9e;
+      --good-soft: #12382f;
+      --warn: #f5b454;
+      --warn-soft: #3a2b10;
+      --bad: #f58b84;
+      --bad-soft: #3e1b1f;
+      --info: #8fb3ff;
+      --info-soft: #17284a;
+      --neutral-soft: #1a2d47;
+      --c1: #34d399;
+      --c2: #1b6b55;
+      --c3: #3a4d66;
+      --c4: #f28b82;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a1424;
+    --card: #102038;
+    --ink: #e7eef7;
+    --muted: #97a8be;
+    --line: #223650;
+    --accent: #34d399;
+    --accent-ink: #052018;
+    --accent-soft: #12382f;
+    --side-bg: #071120;
+    --side-ink: #e8eef6;
+    --side-muted: #8fa2ba;
+    --side-active: #122743;
+    --good: #4ade9e;
+    --good-soft: #12382f;
+    --warn: #f5b454;
+    --warn-soft: #3a2b10;
+    --bad: #f58b84;
+    --bad-soft: #3e1b1f;
+    --info: #8fb3ff;
+    --info-soft: #17284a;
+    --neutral-soft: #1a2d47;
+    --c1: #34d399;
+    --c2: #1b6b55;
+    --c3: #3a4d66;
+    --c4: #f28b82;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-head);
+    margin: 0;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 16px;
+  }
+  h4 {
+    font-size: 14px;
+  }
+  p {
+    margin: 0;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .side {
+    background: var(--side-bg);
+    color: var(--side-ink);
+    padding: 22px 14px 22px max(16px, env(safe-area-inset-left, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-head);
+    font-weight: 700;
+  }
+  .brand b {
+    font-family: var(--font-head);
+    font-size: 17px;
+    display: block;
+    line-height: 1.1;
+  }
+  .brand span {
+    font-size: 11px;
+    color: var(--side-muted);
+  }
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav button {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    text-align: left;
+    background: none;
+    border: 0;
+    color: var(--side-muted);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .nav button:hover {
+    background: var(--side-active);
+    color: var(--side-ink);
+  }
+  .nav button[aria-current="page"] {
+    background: var(--side-active);
+    color: var(--side-ink);
+    box-shadow: inset 3px 0 0 var(--c2);
+  }
+  .side .foot {
+    margin-top: auto;
+    font-size: 11px;
+    color: var(--side-muted);
+    border-top: 1px solid var(--side-active);
+    padding-top: 14px;
+  }
+  .ic {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+  .main {
+    padding: 22px max(24px, env(safe-area-inset-right, 0px)) 60px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .top h1 {
+    font-size: 28px;
+  }
+  .top .sub {
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 9px;
+    border-radius: 99px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    min-width: 0;
+  }
+  .card.alert {
+    border-width: 1px;
+  }
+  .card.alert.bad {
+    background: var(--bad-soft);
+    border-color: var(--bad);
+  }
+  .card.alert.good {
+    background: var(--good-soft);
+    border-color: var(--good);
+  }
+  .card.alert ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+  }
+  .grid {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+  .g4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .g2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .g3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .metric .lab {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .metric .val {
+    font-family: var(--font-head);
+    font-size: 30px;
+    font-weight: 700;
+    margin: 4px 0 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric .sm {
+    color: var(--muted);
+  }
+  .sm {
+    font-size: 12px;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .between {
+    justify-content: space-between;
+  }
+  .wrap {
+    flex-wrap: wrap;
+  }
+  .gap {
+    gap: 12px;
+  }
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn {
+    font: inherit;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    padding: 9px 14px;
+    cursor: pointer;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .btn:hover {
+    border-color: var(--accent);
+  }
+  .btn.pri {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  .btn.pri.lg {
+    padding: 13px 20px;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+  }
+  .btn.warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-color: var(--warn);
+  }
+  .btn.bad {
+    background: var(--bad-soft);
+    color: var(--bad);
+    border-color: var(--bad);
+  }
+  .btn.sec {
+    background: var(--neutral-soft);
+  }
+  .btn.ghost {
+    background: none;
+  }
+  .btn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .badge.good {
+    background: var(--good-soft);
+    color: var(--good);
+  }
+  .badge.warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+  .badge.bad {
+    background: var(--bad-soft);
+    color: var(--bad);
+  }
+  .badge.info {
+    background: var(--info-soft);
+    color: var(--info);
+  }
+  .badge.neutral {
+    background: var(--neutral-soft);
+    color: var(--muted);
+  }
+  .f {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .f span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 10px;
+    width: 100%;
+    min-width: 0;
+  }
+  textarea {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    resize: vertical;
+  }
+  .tw {
+    overflow-x: auto;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    font-size: 13px;
+  }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  td.n,
+  th.n {
+    text-align: right;
+  }
+  tr.hl td {
+    background: var(--accent-soft);
+  }
+  tr.tot td {
+    font-weight: 700;
+    border-top: 2px solid var(--line);
+  }
+  .stackbar {
+    display: flex;
+    height: 22px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--neutral-soft);
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 6px;
+  }
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bp {
+    height: 8px;
+    border-radius: 6px;
+    margin-top: 4px;
+  }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .step .num {
+    font-family: var(--font-head);
+    font-weight: 700;
+    min-width: 22px;
+    color: var(--muted);
+  }
+  .log {
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .log div {
+    display: flex;
+    gap: 10px;
+  }
+  .log time {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .pipe {
+    display: grid;
+    gap: 12px;
+  }
+  .pipe .st {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--bg);
+  }
+  .pipe .st h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .pipe blockquote {
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    border-left: 3px solid var(--accent);
+    background: var(--card);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+  }
+  .stepper {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .stepper div {
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+  }
+  .stepper div.on {
+    background: var(--accent-soft);
+    color: var(--good);
+    border-color: var(--accent);
+  }
+  .stepper div.done {
+    color: var(--good);
+  }
+  .chip {
+    font: inherit;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    padding: 6px 10px;
+    border-radius: 99px;
+    cursor: pointer;
+  }
+  .chip:hover {
+    border-color: var(--accent);
+  }
+  .big {
+    font-family: var(--font-head);
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    z-index: 20;
+    max-width: 90vw;
+  }
+  .chk {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid var(--warn);
+    background: var(--warn-soft);
+    border-radius: 12px;
+  }
+  .chk input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    flex: none;
+  }
+  ul.clean {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+  @media (max-width: 1100px) {
+    .g4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .g3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .side {
+      position: static;
+      height: auto;
+      padding: 14px max(16px, env(safe-area-inset-right, 0px)) 10px
+        max(16px, env(safe-area-inset-left, 0px));
+      gap: 10px;
+    }
+    .nav {
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 6px;
+      padding-bottom: 4px;
+    }
+    .nav button {
+      white-space: nowrap;
+      flex: none;
+      padding: 8px 12px;
+    }
+    .side .foot {
+      display: none;
+    }
+    .main {
+      padding: 16px max(16px, env(safe-area-inset-right, 0px)) 50px
+        max(16px, env(safe-area-inset-left, 0px));
+    }
+    .g2,
+    .g3,
+    .g4 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .top h1 {
+      font-size: 24px;
+    }
+    .stepper {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 520px) {
+    .g4 {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+  const pad = (n) => String(n).padStart(2, "0");
+  const nowT = () => {
+    const d = new Date();
+    return (
+      pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds())
+    );
+  };
+  const esc = (s) =>
+    String(s == null ? "" : s).replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n, d = 1) =>
+    Number.isFinite(n)
+      ? n.toLocaleString("en-IN", {
+          maximumFractionDigits: d,
+          minimumFractionDigits: 0,
+        })
+      : "—";
+  const rs = (n) =>
+    Number.isFinite(n)
+      ? (n < 0 ? "-" : "") +
+        "₹" +
+        Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })
+      : "—";
+  const ICONS = {
+    dash: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    users:
+      '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    utensils:
+      '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+    truck:
+      '<path d="M10 17h4V5H2v12h3"/><path d="M14 8h4l4 4v5h-3"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+    heart:
+      '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+  };
+  const ic = (n) =>
+    '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    ICONS[n] +
+    "</svg>";
+
+  /* ---------- Local sample data (all fictional) ---------- */
+  const HIST = [
+    {
+      name: "Mehta Wedding",
+      type: "Traditional",
+      season: "Winter",
+      day: "Weekend",
+      invited: 500,
+      confirmed: 360,
+      declined: 60,
+      pending: 80,
+      actual: 410,
+    },
+    {
+      name: "Iyer Reception",
+      type: "Reception",
+      season: "Winter",
+      day: "Weekend",
+      invited: 700,
+      confirmed: 500,
+      declined: 70,
+      pending: 130,
+      actual: 575,
+    },
+    {
+      name: "Khan Celebration",
+      type: "Reception",
+      season: "Summer",
+      day: "Weekday",
+      invited: 400,
+      confirmed: 280,
+      declined: 50,
+      pending: 70,
+      actual: 300,
+    },
+    {
+      name: "Nair Wedding",
+      type: "Traditional",
+      season: "Monsoon",
+      day: "Weekend",
+      invited: 600,
+      confirmed: 420,
+      declined: 80,
+      pending: 100,
+      actual: 455,
+    },
+    {
+      name: "Verma Ceremony",
+      type: "Private Ceremony",
+      season: "Winter",
+      day: "Weekday",
+      invited: 150,
+      confirmed: 110,
+      declined: 15,
+      pending: 25,
+      actual: 118,
+    },
+    {
+      name: "Reddy Reception",
+      type: "Reception",
+      season: "Winter",
+      day: "Weekend",
+      invited: 850,
+      confirmed: 620,
+      declined: 90,
+      pending: 140,
+      actual: 690,
+    },
+    {
+      name: "Singh Wedding",
+      type: "Traditional",
+      season: "Summer",
+      day: "Weekend",
+      invited: 550,
+      confirmed: 390,
+      declined: 70,
+      pending: 90,
+      actual: 425,
+    },
+    {
+      name: "Das Reception",
+      type: "Reception",
+      season: "Monsoon",
+      day: "Weekday",
+      invited: 300,
+      confirmed: 200,
+      declined: 40,
+      pending: 60,
+      actual: 218,
+    },
+  ];
+  const FACT = {
+    type: { Traditional: 1.1, Reception: 1.0, "Private Ceremony": 1.15 },
+    season: { Summer: 0.9, Monsoon: 0.85, Winter: 1.1 },
+    day: { Weekday: 0.85, Weekend: 1.05 },
+  };
+  const DISHES = [
+    {
+      id: "biryani",
+      name: "Veg Biryani",
+      unit: "g per guest",
+      def: 200,
+      out: "kg",
+      f: 0.001,
+    },
+    {
+      id: "paneer",
+      name: "Paneer Butter Masala",
+      unit: "g per guest",
+      def: 150,
+      out: "kg",
+      f: 0.001,
+    },
+    {
+      id: "dal",
+      name: "Dal Makhani",
+      unit: "g per guest",
+      def: 120,
+      out: "kg",
+      f: 0.001,
+    },
+    {
+      id: "roti",
+      name: "Roti",
+      unit: "pieces per guest",
+      def: 2,
+      out: "pieces",
+      f: 1,
+    },
+    {
+      id: "gulab",
+      name: "Gulab Jamun",
+      unit: "pieces per guest",
+      def: 1,
+      out: "pieces",
+      f: 1,
+    },
+    {
+      id: "ice",
+      name: "Ice Cream",
+      unit: "ml per guest",
+      def: 100,
+      out: "litres",
+      f: 0.001,
+    },
+  ];
+  const INGS = {
+    rice: { name: "Basmati rice", unit: "kg", price: 110 },
+    paneer: { name: "Paneer", unit: "kg", price: 340 },
+    lentil: { name: "Lentils (dal)", unit: "kg", price: 140 },
+    flour: { name: "Wheat flour (atta)", unit: "kg", price: 38 },
+    dairy: { name: "Milk / dairy", unit: "litres", price: 62 },
+    veg: { name: "Vegetables", unit: "kg", price: 45 },
+  };
+  const ING_KEYS = Object.keys(INGS);
+  const RECIPES = {
+    biryani: [
+      ["rice", 0.4],
+      ["veg", 0.3],
+    ],
+    paneer: [
+      ["paneer", 0.45],
+      ["dairy", 0.2],
+      ["veg", 0.25],
+    ],
+    dal: [
+      ["lentil", 0.35],
+      ["dairy", 0.08],
+    ],
+    roti: [["flour", 0.04]],
+    gulab: [["dairy", 0.04]],
+    ice: [["dairy", 0.6]],
+  };
+  const NGOS = [
+    { id: "n1", name: "Annapurna Seva Trust (Demo Partner)" },
+    { id: "n2", name: "Hunger-Free Bengaluru Collective (Demo Partner)" },
+    { id: "n3", name: "Roti Ghar Foundation (Demo Partner)" },
+  ];
+  const NGO_STATUS = {
+    safety: "Awaiting Safety Verification",
+    approval: "Awaiting Human Approval",
+    prepared: "Request Prepared",
+    confirmed: "Simulated Collection Confirmed",
+  };
+  const STEP_NAMES = [
+    "Validate event inputs",
+    "Retrieve relevant historical attendance data",
+    "Calculate predicted attendance",
+    "Recalculate dish-wise food quantities",
+    "Calculate ingredient requirements",
+    "Compare original and revised vendor costs",
+    "Generate proposed vendor-order adjustment",
+    "Flag actions requiring human approval",
+    "Update dashboard metrics",
+    "Write timestamped activity log entries",
+  ];
+  const TOOLS = [
+    {
+      n: "RSVP Data Reader",
+      a: "read_rsvp_data",
+      p: "Reads the RSVP counts entered in the Guest Turnout Predictor.",
+    },
+    {
+      n: "Historical Records Retriever",
+      a: "retrieve_historical_events",
+      p: "Looks up similar past events in the local attendance records.",
+    },
+    {
+      n: "Vendor Order Manager",
+      a: "prepare_vendor_order",
+      p: "Builds a revised ingredient order. Never contacts a real supplier.",
+    },
+    {
+      n: "NGO Collection Scheduler",
+      a: "prepare_ngo_collection",
+      p: "Drafts a collection request. Never messages a real NGO.",
+    },
+    {
+      n: "Notification Manager",
+      a: "request_human_approval",
+      p: "Flags actions that need a person to approve them.",
+    },
+  ];
+  const ACTIONS = [
+    "read_rsvp_data",
+    "retrieve_historical_events",
+    "calculate_food_quantities",
+    "prepare_vendor_order",
+    "request_human_approval",
+    "prepare_ngo_collection",
+  ];
+
+  /* ---------- State ---------- */
+  let S = initial(),
+    tt = null;
+  function initial() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    const iso =
+      d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    const sv = {};
+    DISHES.forEach((x) => (sv[x.id] = String(x.def)));
+    return {
+      section: "dashboard",
+      event: {
+        name: "Sharma Wedding Reception",
+        invited: "800",
+        confirmed: "600",
+        declined: "80",
+        pending: "120",
+        type: "Reception",
+        season: "Winter",
+        day: "Weekend",
+      },
+      servings: sv,
+      buffer: "5",
+      dataSource: "RSVP export v2 (current)",
+      steps: null,
+      runKey: null,
+      lastRun: null,
+      vendor: { status: "none", order: null },
+      ngo: {
+        ngoId: "n1",
+        item: "biryani",
+        qty: "12",
+        loc: "Orchid Grand Banquet Hall, Whitefield, Bengaluru (fictional)",
+        date: iso,
+        time: "22:30",
+        verified: false,
+        verifier: "",
+        status: "safety",
+        msg: "",
+        request: null,
+      },
+      err: {
+        active: false,
+        orig: null,
+        outdatedForecast: null,
+        correctForecast: null,
+        corrected: null,
+      },
+      log: [
+        { ts: nowT(), msg: "Demo initialised with fictional sample data." },
+      ],
+      tools: [],
+      rag: { q: "", res: null, open: null },
+      toast: "",
+    };
+  }
+  const act = (m) => S.log.unshift({ ts: nowT(), msg: m });
+  const tool = (n, d) => S.tools.unshift({ ts: nowT(), n, d });
+  function toast(m) {
+    S.toast = m;
+    clearTimeout(tt);
+    tt = setTimeout(() => {
+      S.toast = "";
+      doRender();
+    }, 3200);
+  }
+
+  /* ---------- Calculations ---------- */
+  function num(v) {
+    if (typeof v === "number") return v;
+    const t = String(v == null ? "" : v).trim();
+    if (!/^-?\d+(\.\d+)?$/.test(t)) return NaN;
+    return Number(t);
+  }
+  function validate(ev) {
+    const errs = [],
+      v = {};
+    [
+      ["invited", "Total invited guests"],
+      ["confirmed", "Confirmed RSVPs"],
+      ["declined", "Declined RSVPs"],
+      ["pending", "Pending RSVPs"],
+    ].forEach(([k, l]) => {
+      const n = num(ev[k]);
+      if (!Number.isInteger(n) || n < 0)
+        errs.push(l + " must be a whole number, 0 or more.");
+      v[k] = n;
+    });
+    if (!errs.length) {
+      if (v.invited < 1) errs.push("Total invited guests must be at least 1.");
+      const sum = v.confirmed + v.declined + v.pending;
+      if (sum !== v.invited)
+        errs.push(
+          "Confirmed (" +
+            v.confirmed +
+            ") + declined (" +
+            v.declined +
+            ") + pending (" +
+            v.pending +
+            ") = " +
+            sum +
+            ", but invited guests = " +
+            v.invited +
+            ". RSVP counts must add up to the invitation total.",
+        );
+    }
+    return { errs, v };
+  }
+  function histRate() {
+    let a = 0,
+      p = 0;
+    HIST.forEach((h) => {
+      a += h.actual - h.confirmed;
+      p += h.pending;
+    });
+    return { rate: a / p, a, p };
+  }
+  function similar(ev) {
+    return HIST.map((h) => ({
+      h,
+      m:
+        (h.type === ev.type ? 1 : 0) +
+        (h.season === ev.season ? 1 : 0) +
+        (h.day === ev.day ? 1 : 0),
+    }))
+      .filter((x) => x.m >= 2)
+      .sort((a, b) => b.m - a.m);
+  }
+  function forecast(ev, v) {
+    const base = histRate(),
+      ft = FACT.type[ev.type],
+      fs = FACT.season[ev.season],
+      fd = FACT.day[ev.day],
+      mult = ft * fs * fd;
+    const rate = Math.min(1, Math.max(0, base.rate * mult)),
+      min = v.confirmed,
+      max = v.invited - v.declined;
+    const cl = (x) => Math.min(max, Math.max(min, x));
+    const raw = v.confirmed + v.pending * rate;
+    const pred = Math.round(cl(raw)),
+      lo = Math.round(cl(v.confirmed + v.pending * Math.max(0, rate - 0.15))),
+      hi = Math.round(cl(v.confirmed + v.pending * Math.min(1, rate + 0.15)));
+    return {
+      base,
+      ft,
+      fs,
+      fd,
+      mult,
+      rate,
+      raw,
+      pred,
+      lo,
+      hi,
+      min,
+      max,
+      pct: (pred / v.invited) * 100,
+      sim: similar(ev),
+    };
+  }
+  function compute(s) {
+    const { errs, v } = validate(s.event),
+      cfg = [],
+      sv = {};
+    DISHES.forEach((d) => {
+      const n = num(s.servings[d.id]);
+      if (!(n >= 0))
+        cfg.push(
+          "Serving size for " + d.name + " must be a number, 0 or more.",
+        );
+      sv[d.id] = n;
+    });
+    const buf = num(s.buffer);
+    if (!(buf >= 0 && buf <= 100))
+      cfg.push("Safety buffer must be a number from 0 to 100.");
+    const errors = errs.concat(cfg);
+    if (errors.length) return { valid: false, errors, v };
+    const fc = forecast(s.event, v),
+      bm = 1 + buf / 100;
+    const dishes = DISHES.map((d) => {
+      const per = sv[d.id] * d.f,
+        rec0 = per * fc.pred,
+        orig0 = per * v.invited;
+      return Object.assign({}, d, {
+        serving: sv[d.id],
+        rec0,
+        recB: rec0 * bm,
+        orig0,
+        origB: orig0 * bm,
+      });
+    });
+    const ing = {};
+    ING_KEYS.forEach((k) => (ing[k] = { o: 0, r: 0 }));
+    dishes.forEach((d) =>
+      RECIPES[d.id].forEach(([k, f]) => {
+        ing[k].o += d.origB * f;
+        ing[k].r += d.recB * f;
+      }),
+    );
+    const rows = ING_KEYS.map((k) => {
+      const i = INGS[k],
+        o = ing[k].o,
+        r = ing[k].r;
+      return {
+        key: k,
+        name: i.name,
+        unit: i.unit,
+        price: i.price,
+        orig: o,
+        rec: r,
+        diff: r - o,
+        origCost: o * i.price,
+        recCost: r * i.price,
+        sav: (o - r) * i.price,
+      };
+    });
+    const origCost = rows.reduce((a, r) => a + r.origCost, 0),
+      recCost = rows.reduce((a, r) => a + r.recCost, 0);
+    return {
+      valid: true,
+      errors: [],
+      v,
+      fc,
+      buf,
+      dishes,
+      rows,
+      origCost,
+      recCost,
+      savings: origCost - recCost,
+      pctChange: origCost > 0 ? ((recCost - origCost) / origCost) * 100 : 0,
+    };
+  }
+  const vendorKey = (c) =>
+    c.rows.map((r) => r.key + ":" + r.rec.toFixed(3)).join("|");
+  const genOrder = (c) => ({
+    key: vendorKey(c),
+    rows: c.rows.map((r) => Object.assign({}, r)),
+    ts: nowT(),
+    guests: c.fc.pred,
+    invited: c.v.invited,
+    total: c.recCost,
+    orig: c.origCost,
+  });
+  const planKey = () => JSON.stringify([S.event, S.servings, S.buffer]);
+  const VSTAT = {
+    none: "Not generated",
+    awaiting: "Awaiting Human Approval",
+    approved: "Approved — Simulated Vendor Update",
+    rejected: "Rejected by Human Reviewer",
+  };
+
+  /* ---------- Agent workflow ---------- */
+  function runAgent(note) {
+    const c = compute(S),
+      steps = [];
+    const P = (st, d) => steps.push({ n: STEP_NAMES[steps.length], st, d });
+    tool("read_rsvp_data", "source: " + S.dataSource);
+    if (!c.valid) {
+      P("blocked", c.errors.join(" "));
+      while (steps.length < 10)
+        P("blocked", "Not run — Step 1 validation failed.");
+      S.steps = steps;
+      S.runKey = planKey();
+      S.lastRun = nowT();
+      act(
+        (note ? note + " " : "") +
+          "Agent run blocked at Step 1: " +
+          c.errors[0],
+      );
+      return false;
+    }
+    P(
+      "done",
+      "Inputs valid: " +
+        c.v.invited +
+        " invited = " +
+        c.v.confirmed +
+        " confirmed + " +
+        c.v.declined +
+        " declined + " +
+        c.v.pending +
+        " pending.",
+    );
+    tool(
+      "retrieve_historical_events",
+      c.fc.sim.length + " similar events of " + HIST.length,
+    );
+    P(
+      "done",
+      c.fc.sim.length +
+        " of " +
+        HIST.length +
+        " historical events match at least 2 of type/season/day; pending-guest attendance rate " +
+        (c.fc.base.rate * 100).toFixed(1) +
+        "% across all records.",
+    );
+    P(
+      "done",
+      "Predicted attendance " +
+        c.fc.pred +
+        " (" +
+        c.fc.pct.toFixed(1) +
+        "% of invited), planning range " +
+        c.fc.lo +
+        "–" +
+        c.fc.hi +
+        ".",
+    );
+    tool(
+      "calculate_food_quantities",
+      c.fc.pred + " guests, " + c.buf + "% buffer",
+    );
+    P(
+      "done",
+      "Six dishes recalculated for " +
+        c.fc.pred +
+        " guests with a " +
+        c.buf +
+        "% buffer.",
+    );
+    P(
+      "done",
+      "Ingredient requirements derived for " +
+        c.rows.length +
+        " ingredients using demo recipe factors.",
+    );
+    P(
+      "done",
+      "Original plan " +
+        rs(c.origCost) +
+        " vs recommended " +
+        rs(c.recCost) +
+        "; difference " +
+        rs(c.savings) +
+        ".",
+    );
+    S.vendor = { status: "awaiting", order: genOrder(c) };
+    tool(
+      "prepare_vendor_order",
+      "revised order for " + c.fc.pred + " guests, " + rs(c.recCost),
+    );
+    P(
+      "done",
+      "Revised vendor order generated (simulated, not sent to any supplier).",
+    );
+    tool("request_human_approval", "vendor order awaiting approval");
+    P(
+      "approval",
+      "Vendor order needs human approval before the simulated vendor update.",
+    );
+    S.lastRun = nowT();
+    S.runKey = planKey();
+    P("done", "Dashboard metrics refreshed from the new forecast.");
+    act(
+      (note ? note + " " : "") +
+        "Agent run complete: forecast " +
+        c.fc.pred +
+        " guests; vendor order awaiting approval; saving " +
+        rs(c.savings) +
+        ".",
+    );
+    P("done", S.log.length + " timestamped entries now in the activity log.");
+    S.steps = steps;
+    return true;
+  }
+  function simErr() {
+    if (S.err.active) {
+      toast("The AI error is already simulated. Correct the RSVP data first.");
+      return;
+    }
+    const { errs, v } = validate(S.event);
+    if (errs.length) {
+      toast("Fix the RSVP validation errors first.");
+      return;
+    }
+    if (v.confirmed < 100) {
+      toast(
+        "Need at least 100 confirmed RSVPs to simulate 100 missing confirmations.",
+      );
+      return;
+    }
+    const good = compute(S).fc.pred;
+    S.err = {
+      active: true,
+      orig: { confirmed: S.event.confirmed, pending: S.event.pending },
+      outdatedForecast: null,
+      correctForecast: good,
+      corrected: null,
+    };
+    S.event.confirmed = String(v.confirmed - 100);
+    S.event.pending = String(v.pending + 100);
+    S.dataSource = "RSVP export v1 (outdated, 100 confirmations missing)";
+    S.err.outdatedForecast = compute(S).fc.pred;
+    act(
+      "AI error simulated: agent read outdated RSVP export v1; forecast " +
+        S.err.outdatedForecast +
+        " instead of " +
+        good +
+        ".",
+    );
+    runAgent("[Outdated data]");
+  }
+  function fixErr() {
+    if (!S.err.active) return;
+    const from = S.err.outdatedForecast;
+    S.event.confirmed = S.err.orig.confirmed;
+    S.event.pending = S.err.orig.pending;
+    S.dataSource = "RSVP export v2 (current)";
+    act(
+      "Human corrected RSVP data: 100 confirmations restored (confirmed, pending updated together).",
+    );
+    runAgent("[After correction]");
+    const c = compute(S);
+    S.err = {
+      active: false,
+      orig: null,
+      outdatedForecast: null,
+      correctForecast: null,
+      corrected: { from, to: c.valid ? c.fc.pred : null },
+    };
+    act("Renewed human approval required for the refreshed vendor order.");
+  }
+  function resetTo(sec) {
+    S = initial();
+    S.section = sec || "dashboard";
+  }
+
+  /* ---------- Local RAG-style retrieval ---------- */
+  const STOP =
+    "how many much should we what is the for of a an to do does can i our us be are it in on and or with about which who when where my please tell me give there this that".split(
+      " ",
+    );
+  const stem = (w) => {
+    w = w.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (w.length > 4 && w.endsWith("ies")) w = w.slice(0, -3) + "y";
+    else if (w.length > 5 && w.endsWith("ing")) w = w.slice(0, -3);
+    else if (w.length > 4 && w.endsWith("ed")) w = w.slice(0, -2);
+    else if (w.length > 3 && w.endsWith("s") && !w.endsWith("ss"))
+      w = w.slice(0, -1);
+    if (w.length > 3 && w.endsWith("e")) w = w.slice(0, -1);
+    return w;
+  };
+  const SYNRAW = {
+    guest: ["attendance", "rsvp", "turnout"],
+    expect: ["forecast", "predict"],
+    donate: ["donation", "surplus", "ngo", "verification"],
+    donation: ["donate", "surplus", "ngo"],
+    safe: ["safety", "verification"],
+    safety: ["verification", "verify"],
+    check: ["verify", "verification"],
+    adjust: ["revise", "recalculate"],
+    order: ["vendor", "supplier"],
+    size: ["serving", "portion", "gram"],
+    portion: ["serving", "size"],
+    previous: ["historical", "past", "event"],
+    price: ["cost", "rate"],
+  };
+  const SYN = {};
+  Object.keys(SYNRAW).forEach((k) => (SYN[stem(k)] = SYNRAW[k].map(stem)));
+  function buildDocs(c) {
+    const hp = histRate(),
+      buf = S.buffer;
+    const p1 = HIST.map((h, i) => ({
+      id: "D1-" + (i + 1),
+      h,
+      text:
+        h.name +
+        ": " +
+        h.type +
+        ", " +
+        h.season +
+        ", " +
+        h.day +
+        ". Invited " +
+        h.invited +
+        ", confirmed " +
+        h.confirmed +
+        ", declined " +
+        h.declined +
+        ", pending " +
+        h.pending +
+        ", actual attendance " +
+        h.actual +
+        ". Pending guests who attended: " +
+        (h.actual - h.confirmed) +
+        " of " +
+        h.pending +
+        " (" +
+        (((h.actual - h.confirmed) / h.pending) * 100).toFixed(1) +
+        "%).",
+      keys: "previous past event events wedding attendance history historical guests turnout forecast actual rsvp support",
+    }));
+    p1.push({
+      id: "D1-M",
+      text:
+        "Forecast method: predicted attendance = confirmed RSVPs + pending RSVPs × pending attendance rate. Historical pending-guest attendance rate across " +
+        HIST.length +
+        " events = " +
+        (hp.rate * 100).toFixed(1) +
+        "% (" +
+        hp.a +
+        " of " +
+        hp.p +
+        "). Multipliers adjust for wedding type, season and weekday/weekend, and the result is clamped between confirmed RSVPs and invited minus declined.",
+      keys: "how many guests expect forecast predict estimate turnout attendance method formula rate",
+    });
+    const p2 = DISHES.map((d) => ({
+      id: "D2-" + d.id,
+      dish: d,
+      text:
+        d.name +
+        ": " +
+        S.servings[d.id] +
+        " " +
+        d.unit +
+        " (editable planning assumption, not a universal serving standard).",
+      keys:
+        d.name.toLowerCase() +
+        " portion serving size quantity prepare gram menu dish how much per guest",
+    }));
+    p2.push({
+      id: "D2-B",
+      text:
+        "Safety buffer: " +
+        buf +
+        "% is added to every dish quantity to cover small turnout and wastage differences (default 5%).",
+      keys: "buffer safety margin extra wastage percent",
+    });
+    const p3 = ING_KEYS.map((k) => ({
+      id: "D3-" + k,
+      text:
+        INGS[k].name +
+        ": ₹" +
+        INGS[k].price +
+        " per " +
+        INGS[k].unit +
+        " (fictional vendor rate).",
+      keys: "price cost vendor supplier rate ingredient rupee",
+    }));
+    DISHES.forEach((d) =>
+      p3.push({
+        id: "D3-r-" + d.id,
+        text:
+          d.name +
+          " demo recipe factors per " +
+          (d.out === "pieces" ? "piece" : d.out.replace("litres", "litre")) +
+          ": " +
+          RECIPES[d.id]
+            .map(([k, f]) => INGS[k].name + " " + f + " " + INGS[k].unit)
+            .join(", ") +
+          ".",
+        keys: "recipe conversion factor ingredient requirement",
+      }),
+    );
+    p3.push({
+      id: "D3-P",
+      text: "Vendor order adjustment: recalculate ingredient requirements from the predicted attendance instead of the invited count, compare the cost with the original order, generate a revised order, and wait for human approval before any (simulated) vendor update.",
+      keys: "adjust vendor order revise supplier procurement approval reduce quantity savings",
+    });
+    const p4 = [
+      {
+        id: "D4-1",
+        text: "Human verification: surplus food must never be declared safe automatically. A responsible person must assess its safety according to applicable procedures and confirm it before any donation.",
+        keys: "donate donation safe safety verify verification check surplus food human without",
+      },
+      {
+        id: "D4-2",
+        text: "Donation restriction: food whose safety has not been verified must not be donated or offered for collection. This prototype does not establish food-safety suitability.",
+        keys: "restriction restricted unverified not donate donation surplus food safety without check",
+      },
+      {
+        id: "D4-3",
+        text: "NGO collection approval: after verification, a collection request is prepared and needs human approval. NGO availability is not established by this prototype and no real message is sent.",
+        keys: "ngo collection request approval schedule pickup coordinate",
+      },
+    ];
+    return [
+      { id: "DOC-1", name: "Historical Wedding Attendance", passages: p1 },
+      { id: "DOC-2", name: "Menu & Portion Guidelines", passages: p2 },
+      { id: "DOC-3", name: "Vendor Ingredient & Pricing Guide", passages: p3 },
+      {
+        id: "DOC-4",
+        name: "Food Rescue Safety & Coordination Policy",
+        passages: p4,
+      },
+    ];
+  }
+  function retrieve(q, docs) {
+    const terms = [
+      ...new Set(
+        q
+          .split(/\s+/)
+          .filter(
+            (w) =>
+              w && !STOP.includes(w.toLowerCase().replace(/[^a-z0-9]/g, "")),
+          )
+          .map(stem)
+          .filter(Boolean),
+      ),
+    ];
+    const hits = [];
+    docs.forEach((doc) =>
+      doc.passages.forEach((p) => {
+        const set = new Set(
+          (p.text + " " + p.keys + " " + doc.name).split(/\s+/).map(stem),
+        );
+        let sc = 0;
+        const matched = [];
+        terms.forEach((t) => {
+          if (set.has(t)) {
+            sc += 1;
+            matched.push(t);
+          } else
+            (SYN[t] || []).forEach((s) => {
+              if (set.has(s)) {
+                sc += 0.4;
+              }
+            });
+        });
+        if (sc > 0) hits.push({ doc, p, score: sc, matched });
+      }),
+    );
+    hits.sort((a, b) => b.score - a.score);
+    return { terms, hits: hits.slice(0, 3) };
+  }
+  function respond(q, hits, c) {
+    const t = hits[0],
+      ql = q.toLowerCase(),
+      id = t.doc.id;
+    if (id === "DOC-1") {
+      if (!c.valid)
+        return (
+          "The forecast cannot be calculated until the event inputs are valid: " +
+          c.errors[0]
+        );
+      const f = c.fc;
+      if (/previous|past|histor|support|similar/.test(ql))
+        return f.sim.length
+          ? f.sim.length +
+              " of " +
+              HIST.length +
+              " past events share at least two attributes with this event (type, season, day): " +
+              f.sim
+                .map(
+                  (x) =>
+                    x.h.name +
+                    " (" +
+                    (
+                      ((x.h.actual - x.h.confirmed) / x.h.pending) *
+                      100
+                    ).toFixed(0) +
+                    "% of pending guests attended)",
+                )
+                .join("; ") +
+              ". Together all " +
+              HIST.length +
+              " events give a pending-guest attendance rate of " +
+              (f.base.rate * 100).toFixed(1) +
+              "%, which the forecast uses."
+          : "No past event shares two attributes with this event. The forecast uses the overall pending-guest rate of " +
+              (f.base.rate * 100).toFixed(1) +
+              "%.";
+      return (
+        "Expect about " +
+        f.pred +
+        " guests (" +
+        f.pct.toFixed(1) +
+        "% of " +
+        c.v.invited +
+        " invited), planning range " +
+        f.lo +
+        "–" +
+        f.hi +
+        ". This is " +
+        c.v.confirmed +
+        " confirmed plus " +
+        c.v.pending +
+        " pending × " +
+        (f.rate * 100).toFixed(1) +
+        "% adjusted attendance rate. Illustrative forecast, not guaranteed."
+      );
+    }
+    if (id === "DOC-2") {
+      const d = t.p.dish;
+      if (d) {
+        if (
+          c.valid &&
+          /how much|quantity|prepare|total|need|requirement/.test(ql)
+        ) {
+          const x = c.dishes.find((z) => z.id === d.id);
+          return (
+            "For " +
+            c.fc.pred +
+            " predicted guests, prepare " +
+            fmt(x.rec0, 1) +
+            " " +
+            x.out +
+            " of " +
+            x.name +
+            " (" +
+            fmt(x.recB, 1) +
+            " " +
+            x.out +
+            " including the " +
+            c.buf +
+            "% buffer). Serving assumption: " +
+            x.serving +
+            " " +
+            x.unit +
+            "."
+          );
+        }
+        return (
+          d.name +
+          " is planned at " +
+          S.servings[d.id] +
+          " " +
+          d.unit +
+          ". This is an editable demo assumption, not a universal standard."
+        );
+      }
+      return t.p.text;
+    }
+    if (id === "DOC-3") {
+      if (t.p.id === "D3-P") {
+        return c.valid
+          ? "Recalculate ingredients from the forecast (" +
+              c.fc.pred +
+              " guests) instead of " +
+              c.v.invited +
+              " invited, generate a revised order, then wait for human approval. The current revised plan costs " +
+              rs(c.recCost) +
+              " against " +
+              rs(c.origCost) +
+              " originally, a difference of " +
+              rs(c.savings) +
+              " (illustrative)."
+          : "Recalculate ingredients from the forecast, generate a revised order, then wait for human approval.";
+      }
+      return t.p.text;
+    }
+    if (
+      /without|skip|no check|not check|unverified|even if|don.?t check/.test(ql)
+    )
+      return (
+        "No. Surplus food must not be donated without human food-safety verification. " +
+        t.p.text
+      );
+    return t.p.text;
+  }
+
+  /* ---------- Views ---------- */
+  const badge = (t, k) => '<span class="badge ' + k + '">' + esc(t) + "</span>";
+  const inp = (id, label, val, extra) =>
+    '<label class="f"><span>' +
+    label +
+    '</span><input id="' +
+    id +
+    '" data-bind="' +
+    id +
+    '" value="' +
+    esc(val) +
+    '" inputmode="decimal" autocomplete="off" ' +
+    (extra || "") +
+    "></label>";
+  const sel = (id, label, val, opts) =>
+    '<label class="f"><span>' +
+    label +
+    '</span><select id="' +
+    id +
+    '" data-bind="' +
+    id +
+    '">' +
+    opts
+      .map(
+        (o) =>
+          '<option value="' +
+          esc(o[0]) +
+          '"' +
+          (o[0] === val ? " selected" : "") +
+          ">" +
+          esc(o[1]) +
+          "</option>",
+      )
+      .join("") +
+    "</select></label>";
+  const pairs = (a) => a.map((x) => [x, x]);
+  const qty = (d, v) => fmt(v, d.out === "pieces" ? 0 : 1) + " " + d.out;
+  function invalidBox(c) {
+    return (
+      '<section class="card alert bad"><span class="badge bad">Validation error</span><h3 style="margin-top:6px">Inputs need attention before anything can be calculated</h3><ul>' +
+      c.errors.map((e) => "<li>" + esc(e) + "</li>").join("") +
+      '</ul><div class="row gap" style="margin-top:10px"><button class="btn" data-a="nav" data-v="predictor">Open Guest Turnout Predictor</button></div></section>'
+    );
+  }
+  function finCard(c) {
+    if (!c.valid) return "";
+    return (
+      '<section class="card"><div class="row between wrap gap"><h3>Financial impact</h3>' +
+      badge("Illustrative estimate · fictional data", "neutral") +
+      '</div><div class="grid g3" style="margin-top:12px">' +
+      '<div><div class="sm muted">Original ingredient cost</div><div class="big" style="font-size:26px">' +
+      rs(c.origCost) +
+      '</div><div class="sm muted">Planned for ' +
+      c.v.invited +
+      " invited guests + " +
+      c.buf +
+      "% buffer</div></div>" +
+      '<div><div class="sm muted">Recommended ingredient cost</div><div class="big" style="font-size:26px">' +
+      rs(c.recCost) +
+      '</div><div class="sm muted">Planned for ' +
+      c.fc.pred +
+      " predicted guests + " +
+      c.buf +
+      "% buffer</div></div>" +
+      '<div><div class="sm muted">Potential savings</div><div class="big" style="font-size:26px;color:var(--good)">' +
+      rs(c.savings) +
+      '</div><div class="sm muted">' +
+      fmt(c.pctChange, 1) +
+      "% change in cost</div></div></div>" +
+      '<p class="sm muted" style="margin-top:12px">Original guest assumption: ' +
+      c.v.invited +
+      ". Updated assumption: " +
+      c.fc.pred +
+      ". Savings come only from the demo recipes and prices in the Vendor Ingredient &amp; Pricing Guide. They are not proven business results.</p></section>"
+    );
+  }
+  function errPanel(c) {
+    const e = S.err;
+    if (e.active)
+      return (
+        '<section class="card alert bad"><div class="row between wrap gap"><div style="min-width:0;flex:1 1 320px"><span class="badge bad">AI error simulated</span><h3 style="margin-top:6px">Unreliable forecast from outdated RSVP data</h3><p>The AI was using an outdated RSVP dataset, resulting in an unreliable attendance forecast.</p><ul><li>Data source: <b>' +
+        esc(S.dataSource) +
+        "</b></li><li>100 additional guest confirmations were missing from this version.</li><li>Resulting forecast: <b>" +
+        e.outdatedForecast +
+        " guests</b>, against " +
+        e.correctForecast +
+        ' with complete data.</li><li>A vendor order built on this data needs a person to catch the problem before approving it.</li></ul></div><button class="btn warn" data-a="fixErr">Update RSVP Data &amp; Recalculate</button></div></section>'
+      );
+    if (e.corrected)
+      return (
+        '<section class="card alert good"><span class="badge good">Human correction applied</span><h3 style="margin-top:6px">RSVP data updated and everything recalculated</h3><p>Forecast moved from ' +
+        e.corrected.from +
+        " to " +
+        e.corrected.to +
+        " guests. Food quantities and the vendor order were refreshed. <b>Renewed human approval is required</b> for the new vendor order.</p></section>"
+      );
+    return "";
+  }
+  function stepsCard() {
+    const st = S.steps,
+      stale = st && S.runKey !== planKey();
+    return (
+      '<section class="card"><div class="row between wrap gap"><h3>Agent workflow</h3>' +
+      (st
+        ? badge("Last run " + S.lastRun, "info") +
+          (stale ? badge("Inputs changed since last run", "warn") : "")
+        : badge("Not run yet", "neutral")) +
+      "</div>" +
+      (st
+        ? '<div class="steps" style="margin-top:12px">' +
+          st
+            .map(
+              (x, i) =>
+                '<div class="step"><span class="num">' +
+                (i + 1) +
+                '</span><div style="min-width:0;flex:1"><b>' +
+                esc(x.n) +
+                '</b><div class="sm muted">' +
+                esc(x.d) +
+                "</div></div>" +
+                badge(
+                  x.st === "done"
+                    ? "Completed"
+                    : x.st === "approval"
+                      ? "Awaiting approval"
+                      : "Blocked",
+                  x.st === "done"
+                    ? "good"
+                    : x.st === "approval"
+                      ? "warn"
+                      : "bad",
+                ) +
+                "</div>",
+            )
+            .join("") +
+          "</div>"
+        : '<p class="muted" style="margin-top:8px">Press the run button. Each step executes real local calculations; nothing is marked complete unless it ran.</p>') +
+      "</section>"
+    );
+  }
+  function vDash(c) {
+    let h =
+      '<section class="card"><div class="row between wrap gap"><div><h3>Demo scenarios</h3><p class="sm muted">Load a ready situation, then press Run. All data is fictional.</p></div><div class="row wrap"><button class="btn sec" data-a="scenA">A · Normal prediction</button><button class="btn sec" data-a="scenB">B · RSVP data error</button><button class="btn sec" data-a="scenC">C · Food rescue</button><button class="btn ghost" data-a="reset">Reset Demo</button></div></div></section>';
+    h += errPanel(c);
+    h +=
+      '<section class="card" style="background:var(--side-bg);color:var(--side-ink);border-color:var(--side-bg)"><div class="row between wrap gap"><div><h3 style="color:var(--side-ink)">' +
+      esc(S.event.name || "Untitled event") +
+      '</h3><p class="sm" style="color:var(--side-muted)">' +
+      esc(S.event.type) +
+      " · " +
+      esc(S.event.season) +
+      " · " +
+      esc(S.event.day) +
+      " · Data: " +
+      esc(S.dataSource) +
+      '</p></div><div class="row wrap"><button class="btn pri lg" data-a="run">RUN CATER SMART AI AGENT</button><button class="btn warn" data-a="simErr">Simulate AI Error</button></div></div></section>';
+    if (!c.valid) {
+      h += invalidBox(c);
+    }
+    const v = c.valid;
+    const kg = v ? c.dishes.slice(0, 3).reduce((a, d) => a + d.recB, 0) : NaN;
+    h +=
+      '<div class="grid g4">' +
+      '<div class="card metric"><div class="lab">Invited guests</div><div class="val">' +
+      (v ? fmt(c.v.invited, 0) : "—") +
+      '</div><div class="sm">' +
+      (v
+        ? c.v.confirmed +
+          " confirmed · " +
+          c.v.declined +
+          " declined · " +
+          c.v.pending +
+          " pending"
+        : "Fix the inputs") +
+      "</div></div>" +
+      '<div class="card metric"><div class="lab">Predicted attendance</div><div class="val">' +
+      (v ? fmt(c.fc.pred, 0) : "—") +
+      '</div><div class="sm">' +
+      (v
+        ? c.fc.pct.toFixed(1) +
+          "% of invited · range " +
+          c.fc.lo +
+          "–" +
+          c.fc.hi
+        : "") +
+      "</div></div>" +
+      '<div class="card metric"><div class="lab">Estimated food requirement</div><div class="val">' +
+      (v ? fmt(kg, 1) + " kg" : "—") +
+      '</div><div class="sm">' +
+      (v
+        ? "Biryani, paneer, dal · plus " +
+          fmt(c.dishes[3].recB, 0) +
+          " roti, " +
+          fmt(c.dishes[4].recB, 0) +
+          " gulab jamun, " +
+          fmt(c.dishes[5].recB, 1) +
+          " L ice cream"
+        : "") +
+      "</div></div>" +
+      '<div class="card metric"><div class="lab">Potential cost savings</div><div class="val" style="color:var(--good)">' +
+      (v ? rs(c.savings) : "—") +
+      '</div><div class="sm">' +
+      (v
+        ? "Illustrative · " +
+          fmt(Math.abs(c.pctChange), 1) +
+          "% lower than planning for all invited"
+        : "") +
+      "</div></div></div>";
+    if (v) {
+      const f = c.fc,
+        ex = f.pred - c.v.confirmed,
+        noshow = c.v.pending - ex,
+        iv = c.v.invited,
+        w = (n) => ((n / iv) * 100).toFixed(2) + "%";
+      h +=
+        '<div class="grid g2"><section class="card"><h3>Event overview</h3><table style="margin-top:8px"><tbody><tr><td class="muted">Event</td><td>' +
+        esc(S.event.name) +
+        '</td></tr><tr><td class="muted">Type</td><td>' +
+        esc(S.event.type) +
+        '</td></tr><tr><td class="muted">Season / day</td><td>' +
+        esc(S.event.season) +
+        " · " +
+        esc(S.event.day) +
+        '</td></tr><tr><td class="muted">Forecast</td><td><b>' +
+        f.pred +
+        "</b> guests " +
+        badge("Illustrative Forecast — Not Guaranteed", "neutral") +
+        '</td></tr><tr><td class="muted">Pending-guest rate</td><td>' +
+        (f.rate * 100).toFixed(1) +
+        "% (adjusted)</td></tr></tbody></table></section>" +
+        '<section class="card"><h3>Guest attendance visualization</h3><div class="stackbar" style="margin-top:14px" role="img" aria-label="Invited guests split into confirmed, expected pending, unlikely pending and declined"><div style="width:' +
+        w(c.v.confirmed) +
+        ';background:var(--c1)"></div><div style="width:' +
+        w(ex) +
+        ';background:var(--c2)"></div><div style="width:' +
+        w(noshow) +
+        ';background:var(--c3)"></div><div style="width:' +
+        w(c.v.declined) +
+        ';background:var(--c4)"></div></div><div class="legend"><span><i class="dot" style="background:var(--c1)"></i>Confirmed ' +
+        c.v.confirmed +
+        '</span><span><i class="dot" style="background:var(--c2)"></i>Expected from pending ' +
+        ex +
+        '</span><span><i class="dot" style="background:var(--c3)"></i>Pending, not expected ' +
+        noshow +
+        '</span><span><i class="dot" style="background:var(--c4)"></i>Declined ' +
+        c.v.declined +
+        "</span></div></section></div>";
+      h +=
+        '<section class="card"><h3>Food requirement summary</h3><div class="tw"><table style="margin-top:8px"><thead><tr><th>Dish</th><th class="n">Recommended (incl. ' +
+        c.buf +
+        '% buffer)</th><th class="n">If prepared for all ' +
+        c.v.invited +
+        ' invited</th><th class="n">Less food</th></tr></thead><tbody>' +
+        c.dishes
+          .map(
+            (d) =>
+              "<tr><td>" +
+              d.name +
+              '</td><td class="n">' +
+              qty(d, d.recB) +
+              '</td><td class="n">' +
+              qty(d, d.origB) +
+              '</td><td class="n">' +
+              qty(d, d.origB - d.recB) +
+              "</td></tr>",
+          )
+          .join("") +
+        "</tbody></table></div></section>";
+      const o = S.vendor.order,
+        stale = o && o.key !== vendorKey(c);
+      const ns = S.ngo.status;
+      h +=
+        '<div class="grid g2"><section class="card"><h3>Pending vendor approvals</h3><div class="row wrap" style="margin-top:10px">' +
+        (S.vendor.status === "none"
+          ? badge("No order generated", "neutral")
+          : badge(
+              VSTAT[S.vendor.status],
+              S.vendor.status === "awaiting"
+                ? "warn"
+                : S.vendor.status === "approved"
+                  ? "good"
+                  : "bad",
+            )) +
+        (stale ? badge("Out of date — regenerate", "warn") : "") +
+        '</div><p class="sm muted" style="margin-top:8px">' +
+        (S.vendor.status === "awaiting" && !stale
+          ? "1 order is waiting for a human decision."
+          : "No order is waiting for approval right now.") +
+        '</p><div style="margin-top:10px"><button class="btn" data-a="nav" data-v="vendor">Open Vendor Order Optimizer</button></div></section>' +
+        '<section class="card"><h3>Donation coordination status</h3><div class="row wrap" style="margin-top:10px">' +
+        badge(
+          NGO_STATUS[ns],
+          ns === "safety" ? "warn" : ns === "approval" ? "info" : "good",
+        ) +
+        '</div><p class="sm muted" style="margin-top:8px">Food safety verified by a person: ' +
+        (S.ngo.verified ? "Yes" : "No") +
+        '. NGO availability and food-safety suitability are not established by this prototype.</p><div style="margin-top:10px"><button class="btn" data-a="nav" data-v="rescue">Open Food Rescue</button></div></section></div>';
+      h += finCard(c);
+    }
+    h += stepsCard();
+    h +=
+      '<section class="card"><h3>Activity log</h3><div class="log" style="margin-top:10px">' +
+      S.log
+        .map(
+          (l) =>
+            "<div><time>" +
+            l.ts +
+            "</time><span>" +
+            esc(l.msg) +
+            "</span></div>",
+        )
+        .join("") +
+      "</div></section>";
+    return h;
+  }
+  function vPred(c) {
+    const e = S.event,
+      { errs, v } = validate(e);
+    let h =
+      '<section class="card"><div class="row between wrap gap"><h3>Event details</h3>' +
+      badge("Data: " + S.dataSource, S.err.active ? "bad" : "neutral") +
+      '</div><div class="grid g3" style="margin-top:12px">' +
+      inp("event.name", "Event name", e.name) +
+      inp("event.invited", "Total invited guests", e.invited) +
+      inp("event.confirmed", "Confirmed RSVPs", e.confirmed) +
+      inp("event.declined", "Declined RSVPs", e.declined) +
+      inp("event.pending", "Pending RSVPs", e.pending) +
+      sel("event.type", "Wedding type", e.type, pairs(Object.keys(FACT.type))) +
+      sel("event.season", "Season", e.season, pairs(Object.keys(FACT.season))) +
+      sel("event.day", "Event day", e.day, pairs(Object.keys(FACT.day))) +
+      "</div>";
+    const bal = v.invited - v.confirmed - v.declined;
+    if (errs.length)
+      h +=
+        '<div class="card alert bad" style="margin-top:12px"><b>Validation error</b><ul>' +
+        errs.map((x) => "<li>" + esc(x) + "</li>").join("") +
+        "</ul>" +
+        (Number.isInteger(bal) && bal >= 0 && !isNaN(bal)
+          ? '<button class="btn" style="margin-top:8px" data-a="fixPending">Set pending to ' +
+            bal +
+            " so the counts add up</button>"
+          : "") +
+        "</div>";
+    h +=
+      '<div class="row wrap" style="margin-top:14px"><button class="btn pri" data-a="run">Run forecast &amp; agent</button><span class="sm muted">The forecast below also updates live as you edit.</span></div></section>';
+    if (!c.valid) return h + (errs.length ? "" : invalidBox(c));
+    const f = c.fc;
+    h +=
+      '<section class="card"><div class="row between wrap gap"><h3>Forecast</h3>' +
+      badge("Illustrative Forecast — Not Guaranteed", "warn") +
+      '</div><div class="grid g3" style="margin-top:12px"><div><div class="sm muted">Predicted attendance</div><div class="big">' +
+      f.pred +
+      '</div></div><div><div class="sm muted">Share of invited guests</div><div class="big">' +
+      f.pct.toFixed(1) +
+      '%</div></div><div><div class="sm muted">Planning range</div><div class="big" style="font-size:32px">' +
+      f.lo +
+      "–" +
+      f.hi +
+      '</div><div class="sm muted">Pending attendance rate ±15 points</div></div></div></section>';
+    h +=
+      '<section class="card"><h3>How the number is calculated</h3><ol class="clean" style="line-height:1.8"><li>Confirmed RSVPs are assumed to attend: <b>' +
+      c.v.confirmed +
+      "</b>.</li><li>Historical pending-guest attendance rate: " +
+      f.base.a +
+      " of " +
+      f.base.p +
+      " = <b>" +
+      (f.base.rate * 100).toFixed(1) +
+      "%</b> across all " +
+      HIST.length +
+      " records.</li><li>Adjustments: type ×" +
+      f.ft.toFixed(2) +
+      " · season ×" +
+      f.fs.toFixed(2) +
+      " · day ×" +
+      f.fd.toFixed(2) +
+      " = ×" +
+      f.mult.toFixed(3) +
+      ", so the adjusted rate is <b>" +
+      (f.rate * 100).toFixed(1) +
+      "%</b>.</li><li>Expected from pending: " +
+      c.v.pending +
+      " × " +
+      (f.rate * 100).toFixed(1) +
+      "% = <b>" +
+      (c.v.pending * f.rate).toFixed(1) +
+      "</b>.</li><li>Raw forecast: " +
+      c.v.confirmed +
+      " + " +
+      (c.v.pending * f.rate).toFixed(1) +
+      " = " +
+      f.raw.toFixed(1) +
+      ". Clamped to " +
+      f.min +
+      " (confirmed) – " +
+      f.max +
+      " (invited − declined). Rounded forecast: <b>" +
+      f.pred +
+      "</b>.</li></ol></section>";
+    h +=
+      '<div class="grid g2"><section class="card"><h3>Assumptions</h3><ul class="clean"><li>Confirmed guests all attend.</li><li>Declined guests do not attend.</li><li>Multipliers are demo assumptions, not measured values.</li><li>Historical data is fictional (8 events).</li><li>The range is a simple ±15 point band on the pending rate, not a statistical interval.</li></ul></section>';
+    h +=
+      '<section class="card"><h3>Adjustment factors</h3><div class="tw"><table style="margin-top:8px"><tbody><tr><td class="muted">Traditional / Reception / Private</td><td class="n">×1.10 / ×1.00 / ×1.15</td></tr><tr><td class="muted">Summer / Monsoon / Winter</td><td class="n">×0.90 / ×0.85 / ×1.10</td></tr><tr><td class="muted">Weekday / Weekend</td><td class="n">×0.85 / ×1.05</td></tr></tbody></table></div></section></div>';
+    const simIds = f.sim.map((x) => x.h.name);
+    h +=
+      '<section class="card"><h3>Historical records used</h3><p class="sm muted">All ' +
+      HIST.length +
+      " events set the base rate. Highlighted rows also match at least two of type, season and day with this event (" +
+      f.sim.length +
+      ').</p><div class="tw"><table style="margin-top:8px"><thead><tr><th>Event</th><th>Type</th><th>Season</th><th>Day</th><th class="n">Invited</th><th class="n">Confirmed</th><th class="n">Pending</th><th class="n">Actual</th><th class="n">Pending who came</th></tr></thead><tbody>' +
+      HIST.map(
+        (x) =>
+          "<tr" +
+          (simIds.includes(x.name) ? ' class="hl"' : "") +
+          "><td>" +
+          x.name +
+          "</td><td>" +
+          x.type +
+          "</td><td>" +
+          x.season +
+          "</td><td>" +
+          x.day +
+          '</td><td class="n">' +
+          x.invited +
+          '</td><td class="n">' +
+          x.confirmed +
+          '</td><td class="n">' +
+          x.pending +
+          '</td><td class="n">' +
+          x.actual +
+          '</td><td class="n">' +
+          (((x.actual - x.confirmed) / x.pending) * 100).toFixed(1) +
+          "%</td></tr>",
+      ).join("") +
+      "</tbody></table></div></section>";
+    return h;
+  }
+  function vFood(c) {
+    let h =
+      '<section class="card"><div class="row between wrap gap"><div><h3>Serving sizes &amp; buffer</h3><p class="sm muted">Editable demo planning assumptions, not universal serving standards.</p></div>' +
+      badge("Recalculates automatically", "info") +
+      '</div><div class="grid g3" style="margin-top:12px">' +
+      DISHES.map((d) =>
+        inp("servings." + d.id, d.name + " (" + d.unit + ")", S.servings[d.id]),
+      ).join("") +
+      inp("buffer", "Safety buffer (%)", S.buffer) +
+      "</div></section>";
+    if (!c.valid) return h + invalidBox(c);
+    h +=
+      '<section class="card"><div class="row between wrap gap"><h3>Quantities for ' +
+      c.fc.pred +
+      " predicted guests</h3>" +
+      badge("Illustrative Forecast — Not Guaranteed", "warn") +
+      '</div><div class="tw"><table style="margin-top:8px"><thead><tr><th>Dish</th><th class="n">Serving</th><th class="n">Before buffer</th><th class="n">Including ' +
+      c.buf +
+      '% buffer</th><th class="n">For all ' +
+      c.v.invited +
+      ' invited (incl. buffer)</th><th class="n">Difference</th></tr></thead><tbody>' +
+      c.dishes
+        .map(
+          (d) =>
+            "<tr><td>" +
+            d.name +
+            '</td><td class="n">' +
+            d.serving +
+            " " +
+            d.unit.replace(" per guest", "") +
+            '</td><td class="n">' +
+            qty(d, d.rec0) +
+            '</td><td class="n"><b>' +
+            qty(d, d.recB) +
+            '</b></td><td class="n">' +
+            qty(d, d.origB) +
+            '</td><td class="n">' +
+            qty(d, d.origB - d.recB) +
+            "</td></tr>",
+        )
+        .join("") +
+      "</tbody></table></div></section>";
+    h +=
+      '<section class="card"><h3>Original vs recommended</h3><div class="legend"><span><i class="dot" style="background:var(--c3)"></i>Original plan (all invited)</span><span><i class="dot" style="background:var(--c1)"></i>Recommended (predicted attendance)</span></div><div class="bars" style="margin-top:14px">' +
+      c.dishes
+        .map((d) => {
+          const p = d.origB > 0 ? (d.recB / d.origB) * 100 : 0;
+          return (
+            '<div><div class="row between wrap"><b>' +
+            d.name +
+            '</b><span class="sm muted">' +
+            qty(d, d.recB) +
+            " of " +
+            qty(d, d.origB) +
+            " (" +
+            fmt(p, 0) +
+            '%)</span></div><div class="bp" style="background:var(--c3)"><div class="bp" style="margin:0;width:' +
+            p.toFixed(1) +
+            '%;background:var(--c1)"></div></div></div>'
+          );
+        })
+        .join("") +
+      "</div></section>";
+    return h;
+  }
+  function orderText(o, c) {
+    const L = [
+      "CATERSMART AI — SIMULATED SUPPLIER ORDER",
+      "Demonstration only. Not sent to any real supplier.",
+      "Event: " + S.event.name,
+      "Planning guests: " + o.guests + " (invited " + o.invited + ")",
+      "Status: " + VSTAT[S.vendor.status],
+      "Generated: " + o.ts,
+      "",
+    ];
+    o.rows.forEach((r) =>
+      L.push(
+        r.name +
+          ": " +
+          fmt(r.rec, 1) +
+          " " +
+          r.unit +
+          " @ ₹" +
+          r.price +
+          "/" +
+          r.unit +
+          " = " +
+          rs(r.recCost),
+      ),
+    );
+    L.push(
+      "",
+      "Total recommended cost: " + rs(o.total),
+      "Original estimated cost: " + rs(o.orig),
+      "Difference: " +
+        rs(o.orig - o.total) +
+        " (illustrative, fictional prices)",
+    );
+    return L.join("\n");
+  }
+  function orderCsv(o) {
+    const L = [
+      "Ingredient,Original quantity,Recommended quantity,Difference,Unit,Price per unit (INR),Original cost (INR),Recommended cost (INR),Savings (INR)",
+    ];
+    o.rows.forEach((r) =>
+      L.push(
+        [
+          r.name,
+          r.orig.toFixed(2),
+          r.rec.toFixed(2),
+          r.diff.toFixed(2),
+          r.unit,
+          r.price,
+          r.origCost.toFixed(0),
+          r.recCost.toFixed(0),
+          r.sav.toFixed(0),
+        ].join(","),
+      ),
+    );
+    return L.join("\n");
+  }
+  function vVend(c) {
+    if (!c.valid) return invalidBox(c);
+    const vd = S.vendor,
+      o = vd.order,
+      stale = !!o && o.key !== vendorKey(c),
+      canAct = vd.status === "awaiting" && !stale;
+    let h =
+      '<section class="card"><div class="row between wrap gap"><div><h3>Ingredient requirements</h3><p class="sm muted">Demo recipe factors and fictional vendor prices (₹). Original = all ' +
+      c.v.invited +
+      " invited; recommended = " +
+      c.fc.pred +
+      " predicted; both include the " +
+      c.buf +
+      '% buffer.</p></div><div class="row wrap">' +
+      (vd.status === "none"
+        ? badge("Not generated", "neutral")
+        : badge(
+            VSTAT[vd.status],
+            vd.status === "awaiting"
+              ? "warn"
+              : vd.status === "approved"
+                ? "good"
+                : "bad",
+          )) +
+      (stale ? badge("Out of date — regenerate", "warn") : "") +
+      "</div></div>" +
+      '<div class="tw"><table style="margin-top:8px"><thead><tr><th>Ingredient</th><th class="n">Original qty</th><th class="n">Recommended qty</th><th class="n">Difference</th><th class="n">Price / unit</th><th class="n">Original cost</th><th class="n">Recommended cost</th><th class="n">Savings</th></tr></thead><tbody>' +
+      c.rows
+        .map(
+          (r) =>
+            "<tr><td>" +
+            r.name +
+            '</td><td class="n">' +
+            fmt(r.orig, 1) +
+            " " +
+            r.unit +
+            '</td><td class="n"><b>' +
+            fmt(r.rec, 1) +
+            " " +
+            r.unit +
+            '</b></td><td class="n">' +
+            fmt(r.diff, 1) +
+            '</td><td class="n">₹' +
+            r.price +
+            "/" +
+            r.unit +
+            '</td><td class="n">' +
+            rs(r.origCost) +
+            '</td><td class="n">' +
+            rs(r.recCost) +
+            '</td><td class="n">' +
+            rs(r.sav) +
+            "</td></tr>",
+        )
+        .join("") +
+      '<tr class="tot"><td>Total</td><td></td><td></td><td></td><td></td><td class="n">' +
+      rs(c.origCost) +
+      '</td><td class="n">' +
+      rs(c.recCost) +
+      '</td><td class="n">' +
+      rs(c.savings) +
+      "</td></tr></tbody></table></div>" +
+      '<div class="row wrap" style="margin-top:14px"><button class="btn pri" data-a="genOrder">Generate Revised Vendor Order</button><button class="btn" data-a="approveOrder"' +
+      (canAct ? "" : " disabled") +
+      '>Approve</button><button class="btn bad" data-a="rejectOrder"' +
+      (canAct ? "" : " disabled") +
+      ">Reject</button></div>" +
+      '<p class="sm muted" style="margin-top:8px">Approving only marks a simulated update. No supplier receives anything.</p></section>';
+    h += finCard(c);
+    h +=
+      '<div class="grid g2"><section class="card"><div class="row between wrap"><h3>Supplier-order summary</h3><button class="btn" data-a="copy" data-v="ordtxt"' +
+      (o ? "" : " disabled") +
+      '>Copy</button></div><textarea id="ordtxt" rows="13" readonly style="margin-top:10px">' +
+      esc(
+        o
+          ? orderText(o, c)
+          : 'Press "Generate Revised Vendor Order" to create the summary.',
+      ) +
+      "</textarea></section>" +
+      '<section class="card"><div class="row between wrap"><h3>CSV (copy and paste into a spreadsheet)</h3><button class="btn" data-a="copy" data-v="ordcsv"' +
+      (o ? "" : " disabled") +
+      '>Copy</button></div><textarea id="ordcsv" rows="13" readonly style="margin-top:10px">' +
+      esc(o ? orderCsv(o) : "Generated with the order.") +
+      "</textarea></section></div>";
+    return h;
+  }
+  function vRescue(c) {
+    const n = S.ngo,
+      st = n.status,
+      keys = ["safety", "approval", "prepared", "confirmed"],
+      idx = keys.indexOf(st),
+      it = DISHES.find((d) => d.id === n.item);
+    let h =
+      '<section class="card alert" style="background:var(--warn-soft);border-color:var(--warn)"><b>Simulation only.</b> NGOs below are fictional demonstration partners. NGO availability and food-safety suitability are not established by this prototype, and no real message is sent.</section>';
+    h +=
+      '<section class="card"><div class="row between wrap gap"><h3>Collection request</h3>' +
+      badge(
+        NGO_STATUS[st],
+        st === "safety" ? "warn" : st === "approval" ? "info" : "good",
+      ) +
+      '</div><div class="stepper" style="margin-top:12px">' +
+      keys
+        .map(
+          (k, i) =>
+            '<div class="' +
+            (i === idx ? "on" : i < idx ? "done" : "") +
+            '">' +
+            NGO_STATUS[k] +
+            "</div>",
+        )
+        .join("") +
+      "</div>" +
+      '<div class="grid g3" style="margin-top:14px">' +
+      sel(
+        "ngo.ngoId",
+        "NGO name",
+        n.ngoId,
+        NGOS.map((x) => [x.id, x.name]),
+      ) +
+      sel(
+        "ngo.item",
+        "Food item",
+        n.item,
+        DISHES.map((d) => [d.id, d.name]),
+      ) +
+      inp("ngo.qty", "Surplus quantity (" + it.out + ")", n.qty) +
+      '<label class="f"><span>Event location</span><input id="ngo.loc" data-bind="ngo.loc" value="' +
+      esc(n.loc) +
+      '"></label><label class="f"><span>Collection date</span><input id="ngo.date" data-bind="ngo.date" type="date" value="' +
+      esc(n.date) +
+      '"></label><label class="f"><span>Collection time</span><input id="ngo.time" data-bind="ngo.time" type="time" value="' +
+      esc(n.time) +
+      '"></label></div>' +
+      '<div class="chk" style="margin-top:14px"><input id="ngo.verified" data-bind="ngo.verified" type="checkbox"' +
+      (n.verified ? " checked" : "") +
+      '><label for="ngo.verified"><b>Food safety verification (human)</b><br><span class="sm">I confirm that a responsible person has assessed the safety of this food according to applicable procedures. The app never decides this automatically.</span></label></div>' +
+      '<label class="f" style="margin-top:10px"><span>Verified by (name, optional)</span><input id="ngo.verifier" data-bind="ngo.verifier" value="' +
+      esc(n.verifier) +
+      '" placeholder="Responsible person"></label>' +
+      (n.msg
+        ? '<div class="card alert bad" style="margin-top:12px">' +
+          esc(n.msg) +
+          "</div>"
+        : "") +
+      '<div class="row wrap" style="margin-top:14px"><button class="btn pri" data-a="prepNgo">Prepare NGO Collection Request</button><button class="btn" data-a="approveNgo"' +
+      (st === "approval" ? "" : " disabled") +
+      '>Approve Request</button><button class="btn" data-a="confirmNgo"' +
+      (st === "prepared" ? "" : " disabled") +
+      ">Mark Simulated Collection Confirmed</button></div></section>";
+    h +=
+      '<section class="card"><h3>Request preview</h3><textarea id="ngotxt" rows="9" readonly style="margin-top:10px">' +
+      esc(
+        n.request ||
+          'No request prepared yet. Verify food safety, then press "Prepare NGO Collection Request".',
+      ) +
+      "</textarea></section>";
+    return h;
+  }
+  function vRag(c) {
+    const docs = buildDocs(c),
+      r = S.rag,
+      res = r.res;
+    const EX = [
+      "How many guests should we expect?",
+      "How much biryani should we prepare?",
+      "What is the portion size for paneer?",
+      "How do we adjust vendor orders?",
+      "Can we donate surplus food without checking safety?",
+      "Which previous events support the forecast?",
+    ];
+    let h =
+      '<section class="card"><div class="row between wrap gap"><h3>Ask the knowledge base</h3>' +
+      badge(
+        "Local RAG-Style Retrieval Demo — No External LLM Connected",
+        "info",
+      ) +
+      '</div><p class="sm muted" style="margin-top:4px">Keyword search over the four documents below. Answers are filled from source passages and live app values.</p>' +
+      '<div class="row" style="margin-top:12px"><input id="rag.q" data-bind="rag.q" value="' +
+      esc(r.q) +
+      '" placeholder="Type a question" autocomplete="off"><button class="btn pri" data-a="ask">Ask</button></div><div class="row wrap" style="margin-top:10px">' +
+      EX.map(
+        (x, i) =>
+          '<button class="chip" data-a="ex" data-v="' +
+          i +
+          '">' +
+          esc(x) +
+          "</button>",
+      ).join("") +
+      "</div></section>";
+    if (res) {
+      h +=
+        '<section class="card"><h3>Question → Source → Evidence → Response</h3><div class="pipe" style="margin-top:12px"><div class="st"><h4>1 · Question</h4>' +
+        esc(res.q) +
+        '<div class="sm muted" style="margin-top:4px">Search terms: ' +
+        (res.terms.length ? esc(res.terms.join(", ")) : "none") +
+        "</div></div>";
+      if (res.hits.length && res.hits[0].score >= 1.8) {
+        h +=
+          '<div class="st"><h4>2 · Retrieved source</h4>' +
+          res.hits
+            .map(
+              (x) =>
+                "<div>" +
+                badge(x.doc.name, "info") +
+                ' <span class="sm muted">passage ' +
+                x.p.id +
+                " · score " +
+                x.score.toFixed(1) +
+                " · matched: " +
+                esc(x.matched.join(", ") || "related terms") +
+                "</span></div>",
+            )
+            .join("") +
+          "</div>" +
+          '<div class="st"><h4>3 · Evidence</h4>' +
+          res.hits
+            .map(
+              (x) =>
+                "<blockquote><b>" +
+                esc(x.doc.name) +
+                "</b> — " +
+                esc(x.p.text) +
+                "</blockquote>",
+            )
+            .join("") +
+          "</div>" +
+          '<div class="st"><h4>4 · Generated response</h4><p>' +
+          esc(res.answer) +
+          '</p><p class="sm muted" style="margin-top:6px">Source: ' +
+          esc(res.hits[0].doc.name) +
+          " (passage " +
+          res.hits[0].p.id +
+          ")</p></div>";
+      } else {
+        h +=
+          '<div class="st"><h4>2–4 · Result</h4><p><b>No matching evidence found in the current knowledge base.</b></p></div>';
+      }
+      h += "</div></section>";
+    }
+    h +=
+      '<section class="card"><h3>Knowledge base</h3><div class="stack" style="margin-top:10px">' +
+      docs
+        .map(
+          (d) =>
+            '<div style="border:1px solid var(--line);border-radius:12px;padding:12px"><div class="row between wrap"><b>' +
+            d.id.replace("DOC-", "Document ") +
+            " · " +
+            d.name +
+            '</b><button class="btn" data-a="doc" data-v="' +
+            d.id +
+            '">' +
+            (r.open === d.id ? "Hide" : "Show") +
+            " " +
+            d.passages.length +
+            " passages</button></div>" +
+            (r.open === d.id
+              ? '<ul class="clean sm">' +
+                d.passages
+                  .map(
+                    (p) =>
+                      '<li><span class="muted">' +
+                      p.id +
+                      "</span> " +
+                      esc(p.text) +
+                      "</li>",
+                  )
+                  .join("") +
+                "</ul>"
+              : "") +
+            "</div>",
+        )
+        .join("") +
+      "</div></section>";
+    return h;
+  }
+  function vTools(c) {
+    const cnt = (a) => S.tools.filter((t) => t.n === a).length,
+      last = (a) => {
+        const t = S.tools.find((x) => x.n === a);
+        return t ? t.ts : "—";
+      };
+    let h =
+      '<section class="card"><div class="row between wrap gap"><h3>Agent tool connections</h3>' +
+      badge("Local Simulation — MCP-Compatible Concept", "info") +
+      '</div><p class="sm muted" style="margin-top:4px">These are local functions inside this page shaped like tools an agent could call. None is a real MCP server, and nothing leaves the page.</p>' +
+      '<div class="tw"><table style="margin-top:10px"><thead><tr><th>Tool</th><th>Purpose</th><th>Action</th><th>Status</th><th class="n">Calls</th></tr></thead><tbody>' +
+      TOOLS.map(
+        (t) =>
+          "<tr><td><b>" +
+          t.n +
+          '</b></td><td style="white-space:normal;min-width:240px">' +
+          t.p +
+          "</td><td><code>" +
+          t.a +
+          "</code></td><td>" +
+          badge("Simulated · local", "neutral") +
+          '</td><td class="n">' +
+          cnt(t.a) +
+          "</td></tr>",
+      ).join("") +
+      "</tbody></table></div></section>";
+    h +=
+      '<section class="card"><h3>Tool-action log</h3><p class="sm muted">Entries appear only when you actually use the app.</p><div class="tw"><table style="margin-top:8px"><thead><tr><th>Action</th><th class="n">Times called</th><th class="n">Last called</th></tr></thead><tbody>' +
+      ACTIONS.map(
+        (a) =>
+          "<tr><td><code>" +
+          a +
+          '</code></td><td class="n">' +
+          cnt(a) +
+          '</td><td class="n">' +
+          last(a) +
+          "</td></tr>",
+      ).join("") +
+      "</tbody></table></div>" +
+      '<div class="log" style="margin-top:12px">' +
+      (S.tools.length
+        ? S.tools
+            .map(
+              (t) =>
+                "<div><time>" +
+                t.ts +
+                "</time><span><code>" +
+                t.n +
+                "</code> — " +
+                esc(t.d) +
+                "</span></div>",
+            )
+            .join("")
+        : '<div class="muted">No tool actions yet. Run the agent from the dashboard.</div>') +
+      "</div></section>";
+    return h;
+  }
+  const NAV = [
+    ["dashboard", "Operations Dashboard", "dash"],
+    ["predictor", "Guest Turnout Predictor", "users"],
+    ["food", "Dish-wise Food Calculator", "utensils"],
+    ["vendor", "Vendor Order Optimizer", "truck"],
+    ["rescue", "Food Rescue & NGO", "heart"],
+    ["rag", "Knowledge Assistant", "search"],
+    ["tools", "Agent Tool Connections", "plug"],
+  ];
+  let _raf = null;
+  function render() {
+    if (_raf) cancelAnimationFrame(_raf);
+    _raf = requestAnimationFrame(() => {
+      _raf = null;
+      doRender();
+    });
+  }
+  function doRender() {
+    const c = compute(S),
+      a = document.activeElement,
+      id = a && a.id;
+    let ss = null,
+      se = null;
+    try {
+      ss = a.selectionStart;
+      se = a.selectionEnd;
+    } catch (e) {}
+    const V = {
+      dashboard: vDash,
+      predictor: vPred,
+      food: vFood,
+      vendor: vVend,
+      rescue: vRescue,
+      rag: vRag,
+      tools: vTools,
+    };
+    try {
+      $("app").innerHTML =
+        '<div class="layout"><aside class="side"><div class="brand"><div class="logo">CS</div><div><b>CaterSmart AI</b><span>Operations suite</span></div></div><nav class="nav">' +
+        NAV.map(
+          (n) =>
+            '<button data-a="nav" data-v="' +
+            n[0] +
+            '"' +
+            (S.section === n[0] ? ' aria-current="page"' : "") +
+            ">" +
+            ic(n[2]) +
+            esc(n[1]) +
+            "</button>",
+        ).join("") +
+        '</nav><div class="foot">Group 3 | Operations | Academic Demonstration<br>Fictional data. Local simulation.</div></aside><main class="main"><header class="top"><div><h1>CaterSmart AI</h1><div class="sub">Intelligent Catering Operations &amp; Food Waste Optimization</div><span class="tag">Group 3 | Operations | Academic Demonstration</span></div><div class="row wrap"><button class="btn pri" data-a="run">Run AI Analysis</button><button class="btn ghost" data-a="reset">Reset Demo</button></div></header>' +
+        '<div class="sm muted" style="margin-top:-8px">Smarter Guest Predictions. Less Food Waste.</div>' +
+        V[S.section](c) +
+        "</main></div>" +
+        (S.toast
+          ? '<div class="toast" role="status">' + esc(S.toast) + "</div>"
+          : "");
+    } catch (err) {
+      setTimeout(() => {
+        try {
+          doRender();
+        } catch (e) {}
+      }, 0);
+      return;
+    }
+    if (id) {
+      const el = $(id);
+      if (el) {
+        el.focus();
+        try {
+          if (ss != null) el.setSelectionRange(ss, se);
+        } catch (e) {}
+      }
+    }
+  }
+
+  /* ---------- Actions ---------- */
+  function dispatch(a, v) {
+    const c = compute(S);
+    switch (a) {
+      case "nav":
+        S.section = v;
+        try {
+          window.scrollTo(0, 0);
+        } catch (e) {}
+        break;
+      case "run": {
+        const ok = runAgent();
+        S.section = "dashboard";
+        toast(
+          ok
+            ? "Agent run complete. A vendor order is awaiting human approval."
+            : "Agent blocked: fix the input errors shown.",
+        );
+        try {
+          window.scrollTo(0, 0);
+        } catch (e) {}
+        break;
+      }
+      case "simErr":
+        simErr();
+        S.section = "dashboard";
+        break;
+      case "fixErr":
+        fixErr();
+        break;
+      case "reset":
+        resetTo("dashboard");
+        toast("Demo reset to defaults.");
+        break;
+      case "scenA":
+        resetTo("dashboard");
+        act("Scenario A loaded: normal prediction.");
+        runAgent("[Scenario A]");
+        break;
+      case "scenB":
+        resetTo("dashboard");
+        act("Scenario B loaded: RSVP data error.");
+        simErr();
+        break;
+      case "scenC":
+        resetTo("rescue");
+        act(
+          "Scenario C loaded: simulated surplus of 12 kg Veg Biryani identified after the event.",
+        );
+        runAgent("[Scenario C]");
+        S.section = "rescue";
+        break;
+      case "fixPending": {
+        const { v: x } = validate(S.event);
+        const b = x.invited - x.confirmed - x.declined;
+        if (b >= 0) S.event.pending = String(b);
+        break;
+      }
+      case "genOrder":
+        if (!c.valid) {
+          toast("Fix the input errors first.");
+          break;
+        }
+        S.vendor = { status: "awaiting", order: genOrder(c) };
+        tool(
+          "prepare_vendor_order",
+          "revised order for " + c.fc.pred + " guests, " + rs(c.recCost),
+        );
+        tool("request_human_approval", "vendor order awaiting approval");
+        act(
+          "Revised vendor order generated: " +
+            rs(c.recCost) +
+            " for " +
+            c.fc.pred +
+            " guests. Status: Awaiting Human Approval.",
+        );
+        break;
+      case "approveOrder": {
+        const o = S.vendor.order;
+        if (
+          !c.valid ||
+          !o ||
+          o.key !== vendorKey(c) ||
+          S.vendor.status !== "awaiting"
+        ) {
+          toast("Regenerate the order first.");
+          break;
+        }
+        S.vendor.status = "approved";
+        act(
+          "Human approved the vendor order. Approved — Simulated Vendor Update (no supplier contacted).",
+        );
+        break;
+      }
+      case "rejectOrder":
+        if (S.vendor.status === "awaiting") {
+          S.vendor.status = "rejected";
+          act("Human rejected the revised vendor order.");
+        }
+        break;
+      case "copy": {
+        const el = $(v);
+        if (!el) break;
+        const done = () => {
+          toast("Copied to clipboard.");
+          doRender();
+        };
+        try {
+          navigator.clipboard
+            .writeText(el.value)
+            .then(done)
+            .catch(() => {
+              try {
+                el.select();
+              } catch (e) {}
+              toast("Select the text and press Ctrl+C.");
+              doRender();
+            });
+        } catch (e) {
+          try {
+            el.select();
+          } catch (x) {}
+          toast("Select the text and press Ctrl+C.");
+        }
+        return;
+      }
+      case "prepNgo": {
+        const n = S.ngo,
+          q = num(n.qty);
+        if (!(q > 0)) {
+          n.msg = "Enter a surplus quantity greater than 0.";
+          break;
+        }
+        if (!n.date || !n.time || !n.loc.trim()) {
+          n.msg = "Enter an event location, collection date and time.";
+          break;
+        }
+        if (!n.verified) {
+          n.msg =
+            "Blocked: food safety has not been verified. A responsible person must confirm it with the checkbox before a request can be prepared.";
+          act("NGO request blocked: food safety not verified by a human.");
+          break;
+        }
+        const it = DISHES.find((d) => d.id === n.item),
+          ng = NGOS.find((x) => x.id === n.ngoId);
+        n.msg = "";
+        n.status = "approval";
+        n.request = [
+          "SIMULATED NGO COLLECTION REQUEST — NOT SENT",
+          "To: " + ng.name,
+          "Food: " + fmt(q, 1) + " " + it.out + " of " + it.name,
+          "Event: " + S.event.name,
+          "Location: " + n.loc,
+          "Collection: " + n.date + " at " + n.time,
+          "Food safety: confirmed by a responsible person" +
+            (n.verifier.trim() ? " (" + n.verifier.trim() + ")" : "") +
+            " at " +
+            nowT(),
+          "Note: NGO availability is not confirmed. No message has been sent.",
+        ].join("\n");
+        tool(
+          "prepare_ngo_collection",
+          fmt(q, 1) + " " + it.out + " " + it.name + " → " + ng.name,
+        );
+        tool(
+          "request_human_approval",
+          "NGO collection request awaiting approval",
+        );
+        act(
+          "NGO collection request prepared (simulated). Status: Awaiting Human Approval.",
+        );
+        break;
+      }
+      case "approveNgo":
+        if (!S.ngo.verified) {
+          S.ngo.msg = "Blocked: food safety verification is missing.";
+          break;
+        }
+        if (S.ngo.status === "approval") {
+          S.ngo.status = "prepared";
+          S.ngo.msg = "";
+          act(
+            "Human approved the NGO collection request. Status: Request Prepared.",
+          );
+        }
+        break;
+      case "confirmNgo":
+        if (S.ngo.status === "prepared") {
+          S.ngo.status = "confirmed";
+          act("Simulated collection confirmed. No real NGO was contacted.");
+        }
+        break;
+      case "ask":
+      case "ex": {
+        if (a === "ex") {
+          S.rag.q = [
+            "How many guests should we expect?",
+            "How much biryani should we prepare?",
+            "What is the portion size for paneer?",
+            "How do we adjust vendor orders?",
+            "Can we donate surplus food without checking safety?",
+            "Which previous events support the forecast?",
+          ][Number(v)];
+        }
+        const q = S.rag.q.trim();
+        if (!q) {
+          toast("Type a question first.");
+          break;
+        }
+        const docs = buildDocs(c),
+          r = retrieve(q, docs),
+          ok = r.hits.length && r.hits[0].score >= 1.8;
+        S.rag.res = {
+          q,
+          terms: r.terms,
+          hits: r.hits,
+          answer: ok ? respond(q, r.hits, c) : "",
+        };
+        if (ok && r.hits[0].doc.id === "DOC-1")
+          tool("retrieve_historical_events", "RAG query: " + q);
+        act(
+          'Knowledge query: "' +
+            q +
+            '" → ' +
+            (ok ? r.hits[0].doc.name : "no matching evidence") +
+            ".",
+        );
+        break;
+      }
+      case "doc":
+        S.rag.open = S.rag.open === v ? null : v;
+        break;
+    }
+    render();
+  }
+  function onBind(e) {
+    const t = e.target,
+      p = t.dataset && t.dataset.bind;
+    if (!p) return;
+    const val = t.type === "checkbox" ? t.checked : t.value,
+      k = p.split(".");
+    let o = S;
+    for (let i = 0; i < k.length - 1; i++) o = o[k[i]];
+    o[k[k.length - 1]] = val;
+    if (k[0] === "ngo") {
+      if (k[1] === "verified" && !val && S.ngo.status !== "safety") {
+        S.ngo.status = "safety";
+        S.ngo.request = null;
+        S.ngo.msg =
+          "Verification withdrawn. The request was reset and needs a new safety check.";
+        act("NGO request reset: human safety verification withdrawn.");
+      } else if (
+        ["ngoId", "item", "qty"].includes(k[1]) &&
+        S.ngo.status !== "safety"
+      ) {
+        S.ngo.status = "safety";
+        S.ngo.verified = false;
+        S.ngo.request = null;
+        S.ngo.msg = "Food details changed. Please verify food safety again.";
+        act("NGO request reset: food details changed, re-verification needed.");
+      }
+    }
+    render();
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-a]");
+    if (!b || b.disabled) return;
+    dispatch(b.dataset.a, b.dataset.v);
+  });
+  document.addEventListener("input", onBind);
+  document.addEventListener("change", onBind);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.id === "rag.q") {
+      e.preventDefault();
+      dispatch("ask");
+    }
+  });
+  doRender();
+</script>
+</body>
+</html>
