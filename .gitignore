@@ -3,3 +3,5 @@ node_modules/
 .playwright/
 verification-results/
 .env*.local
+
+.vercel
